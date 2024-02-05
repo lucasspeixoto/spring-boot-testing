@@ -304,4 +304,82 @@ class EmployeeControllerTest {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON));
     }
+
+    @Test
+    @Order(8)
+    @DisplayName("JUnit test for delete method (Success Case)")
+    void givenEmployeeObject_whenDeleteById_thenReturnUpdatedEmployee() throws Exception {
+        //given - precondition or setup
+        long employeeId = 1L;
+        Employee employee = Employee.builder()
+                .id(1L)
+                .firstName("Lucas")
+                .lastName("Peixoto")
+                .email("lspeixotodev@gmail.com")
+                .age(31)
+                .build();
+
+        given(employeeService.getEmployeeById(employeeId)).willReturn(Optional.of(employee));
+
+        given(employeeService.deleteEmployee(any(Employee.class))).willAnswer(
+                (invocation -> invocation.getArgument(0))
+        );
+
+        //when - action or the behaviour we`re testing
+        ResultActions response = mockMvc.perform(
+                MockMvcRequestBuilders.delete("/api/employees", employee)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(employee))
+        );
+
+        //then - verify the result or output using assert statements
+        response
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.firstName",
+                        CoreMatchers.is(employee.getFirstName())))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.lastName",
+                        CoreMatchers.is(employee.getLastName())))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.email",
+                        CoreMatchers.is(employee.getEmail())))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.age",
+                        CoreMatchers.is(employee.getAge())));
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName("JUnit test for delete method (Failed Case)")
+    void givenEmployeeObject_whenDelete_thenThrowAnException() throws Exception {
+
+        //given - precondition or setup
+        long employeeId = 1L;
+
+        Employee employee = Employee.builder()
+                .id(1L)
+                .firstName("Lucas")
+                .lastName("Peixoto")
+                .email("lspeixotodev@gmail.com")
+                .age(31)
+                .build();
+
+        String doesNotExistsErrorMessage = "Employee Does not exists with given Id: " + employeeId;
+
+        given(employeeService.deleteEmployee(any(Employee.class)))
+                .willThrow(new ResourceAlreadyExistsException(doesNotExistsErrorMessage));
+
+        //when - action or the behaviour we`re testing
+        ResultActions response = mockMvc.perform(
+                MockMvcRequestBuilders.delete("/api/employees")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(employee))
+        );
+
+        //then - verify the result or output using assert statements
+        response
+                .andExpect(MockMvcResultMatchers.status().isConflict())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message", CoreMatchers.is(doesNotExistsErrorMessage)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON));
+    }
 }

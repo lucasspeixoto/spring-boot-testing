@@ -1,7 +1,5 @@
 package com.lspeixotodev.springboottesting.controller;
 
-import com.lspeixotodev.springboottesting.exception.ResourceAlreadyExistsException;
-import com.lspeixotodev.springboottesting.exception.ResourceNotFoundException;
 import com.lspeixotodev.springboottesting.model.Employee;
 import com.lspeixotodev.springboottesting.service.impl.EmployeeServiceImpl;
 import com.lspeixotodev.springboottesting.utils.constants.MediaType;
@@ -59,6 +57,17 @@ public class EmployeeController {
 
         return new ResponseEntity<>(updatedEmployee, HttpStatus.OK);
 
+    }
+
+    @DeleteMapping(
+            consumes = {MediaType.APPLICATION_JSON},
+            produces = {MediaType.APPLICATION_JSON}
+    )
+    public ResponseEntity<Employee> deleteEmployee(@RequestBody Employee employee) throws Exception {
+
+        Employee deletedEmployee = employeeService.deleteEmployee(employee);
+
+        return new ResponseEntity<>(deletedEmployee, HttpStatus.OK);
     }
 
 }

@@ -1,6 +1,5 @@
-package com.lspeixotodev.springboottesting.service.impl;
+package com.lspeixotodev.springboottesting.service;
 
-import com.lspeixotodev.springboottesting.exception.GlobalExceptionHandler;
 import com.lspeixotodev.springboottesting.exception.ResourceAlreadyExistsException;
 import com.lspeixotodev.springboottesting.exception.ResourceNotFoundException;
 import com.lspeixotodev.springboottesting.model.Employee;
@@ -8,6 +7,7 @@ import com.lspeixotodev.springboottesting.model.Employee;
 import static org.assertj.core.api.Assertions.*;
 
 import com.lspeixotodev.springboottesting.repository.EmployeeRepository;
+import com.lspeixotodev.springboottesting.service.impl.EmployeeServiceImpl;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -17,7 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.context.ContextConfiguration;
 
 import java.util.Collections;
 import java.util.List;
@@ -134,7 +133,7 @@ public class EmployeeServiceImplTest {
 
     }
 
-    @DisplayName("JUnit test for find employee by id method Success case")
+    @DisplayName("JUnit test for find employee by id method (Success case)")
     @Order(5)
     @Test
     public void givenEmployeeObject_WhenFindById_ThenReturnEmployeeObject() throws Exception {
@@ -152,7 +151,7 @@ public class EmployeeServiceImplTest {
         assertThat(savedEmployee.getLastName()).isEqualTo("Peixoto");
     }
 
-    @DisplayName("JUnit test for update employee method Success case")
+    @DisplayName("JUnit test for update employee method (Success case)")
     @Order(5)
     @Test
     public void givenEmployeeObject_WhenUpdate_ThenReturnUpdatedEmployeeObject() throws Exception {
@@ -178,7 +177,7 @@ public class EmployeeServiceImplTest {
         assertThat(updatedEmployee.getLastName()).isEqualTo("Schwarzenegger");
     }
 
-    @DisplayName("JUnit test for update employee method Failed case")
+    @DisplayName("JUnit test for update employee method (Failed case)")
     @Order(6)
     @Test
     public void givenEmployeeObject_WhenUpdate_ThenThrowsAnException() {
@@ -196,30 +195,34 @@ public class EmployeeServiceImplTest {
         verify(employeeRepository, never()).save(any(Employee.class));
     }
 
-    @DisplayName("JUnit test for delete employee method Success case")
+    @DisplayName("JUnit test for delete employee method (Success case)")
     @Order(7)
     @Test
-    public void givenEmployeeId_WhenDeleteById_ThenNothing() {
+    public void givenEmployeeId_WhenDeleteEmployee_ThenNothing() {
         //given - precondition or setup
-        willDoNothing().given(employeeRepository).deleteById(employee.getId());
-
-        given(employeeRepository.findById(employee.getId()))
+        given(employeeRepository.findById(1L))
                 .willReturn(Optional.of(employee));
 
         //when - action or the behaviour we`re testing
-        employeeService.deleteEmployee(employee.getId());
+        employeeService.deleteEmployee(employee);
 
         //then - verify the output
         verify(employeeRepository, times(1))
-                .deleteById(employee.getId());
+                .delete(employee);
 
     }
 
-    @DisplayName("JUnit test for delete employee method Failed case")
+    @DisplayName("JUnit test for delete employee method (Failed case)")
     @Order(8)
     @Test
-    public void givenEmployeeId_WhenDeleteById_ThenThrowAnException() {
+    public void givenEmployeeId_WhenDeleteEmployee_ThenThrowAnException() {
         //given - precondition or setup
+        Employee toDeleteEmployee = Employee.builder()
+                .id(2L)
+                .firstName("Lucas")
+                .lastName("Peixoto")
+                .email("lspeixotodev@gmail.com")
+                .age(32).build();
 
         given(employeeRepository.findById(anyLong()))
                 .willReturn(Optional.empty());
@@ -227,11 +230,11 @@ public class EmployeeServiceImplTest {
         //when - action or the behaviour we`re testing
         org.junit.jupiter.api.Assertions.assertThrows(
                 ResourceNotFoundException.class,
-                () -> employeeService.deleteEmployee(2L)
+                () -> employeeService.deleteEmployee(toDeleteEmployee)
         );
 
         //then - verify the output
-        verify(employeeRepository, never()).deleteById(anyLong());
+        verify(employeeRepository, never()).delete(any(Employee.class));
 
     }
 

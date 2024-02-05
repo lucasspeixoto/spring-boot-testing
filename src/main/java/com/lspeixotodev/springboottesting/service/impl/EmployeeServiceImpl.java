@@ -74,30 +74,26 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new ResourceNotFoundException("Employee Does not exists with given Id: " + employeeId);
         }
 
-
         return repository.save(updatedEmployee);
 
     }
 
     @Override
-    public void deleteEmployee(Long id) {
+    public Employee deleteEmployee(Employee employee) {
 
-        Optional<Employee> optionalExistingEmployee = repository.findById(id);
+        Employee deletedEmployee = new Employee();
 
-        if (optionalExistingEmployee.isEmpty()) {
-            throw new ResourceNotFoundException("Employee Does not exists with given id: " + id);
+        try {
+            Optional<Employee> optionalExistingEmployee = getEmployeeById(employee.getId());
+
+            if(optionalExistingEmployee.isPresent()) {
+                deletedEmployee = optionalExistingEmployee.get();
+                repository.delete(employee);
+            }
+        } catch (Exception e) {
+            throw new ResourceNotFoundException("Employee Does not exists with given Id: " + employee.getId());
         }
 
-        repository.deleteById(id);
-    }
-
-    public Employee buildNewEmployee(Employee employee) {
-
-        return Employee.builder()
-                .firstName(employee.getFirstName())
-                .lastName(employee.getLastName())
-                .email(employee.getEmail())
-                .age(employee.getAge())
-                .build();
+        return deletedEmployee;
     }
 }

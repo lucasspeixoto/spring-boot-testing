@@ -18,5 +18,5 @@ public interface EmployeeService {
 
     Employee updateEmployee(Employee employee) throws Exception;
 
-    void deleteEmployee(Long id);
+    Employee deleteEmployee(Employee employee) throws Exception;
 }
