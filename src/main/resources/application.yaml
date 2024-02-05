@@ -1,0 +1,7 @@
+
+spring:
+  datasource:
+  jpa:
+    show-sql: true
+  jackson:
+    time-zone: America/Sao_Paulo
