@@ -1,52 +1,54 @@
-package com.lspeixotodev.springboottesting.controller;
+package com.lspeixotodev.springboottesting.integration;
 
-import static org.mockito.BDDMockito.*;
-
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lspeixotodev.springboottesting.exception.ResourceAlreadyExistsException;
+import com.lspeixotodev.springboottesting.SpringBootTestingApplication;
 import com.lspeixotodev.springboottesting.model.Employee;
-import com.lspeixotodev.springboottesting.service.impl.EmployeeServiceImpl;
+import com.lspeixotodev.springboottesting.repository.EmployeeRepository;
 import com.lspeixotodev.springboottesting.utils.constants.MediaType;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.*;
-import org.mockito.ArgumentMatchers;
-
 import org.springframework.beans.factory.annotation.Autowired;
-
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-@WebMvcTest(EmployeeController.class)
-@DisplayName("Employee Controller (Unit Testing)")
+@SpringBootTest(classes = SpringBootTestingApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class EmployeeControllerTest {
+@DisplayName("Employee Controller (Integration Testing)")
+public class EmployeeControllerIntegrationTests {
 
     @Autowired
     private MockMvc mockMvc;
 
-    /*
-    O @MockBean informa ao Spring que é necessário criar um mock
-    da instância de EmployeeService e adiciona isso ao contexto
-    da aplicação e pode ser injetado no EmployeeController
-     */
-    @MockBean
-    private EmployeeServiceImpl employeeService;
+    @Autowired
+    private EmployeeRepository employeeRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private static ObjectMapper objectMapper;
+
+    @BeforeAll
+    public static void setup() {
+        objectMapper = new ObjectMapper();
+        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+    }
+
+    @BeforeEach
+    public void config() {
+        employeeRepository.deleteAll();
+    }
 
     @Test
     @Order(1)
-    @DisplayName("JUnit test for create Employee method (Success Case)")
+    @DisplayName("Integration Test to Create a Employee (Success Case)")
     public void givenEmployeeObject_WhenCreateEmployee_ThenReturnSavedEmployee() throws Exception {
         //given - precondition or setup
         Employee employee = Employee.builder()
@@ -56,16 +58,11 @@ class EmployeeControllerTest {
                 .age(32)
                 .build();
 
-        given(employeeService.saveEmployee(
-                ArgumentMatchers.any(Employee.class))
-        ).willAnswer((invocation) -> invocation.getArgument(0));
-
         //when - action or the behaviour we`re testing
         ResultActions response = mockMvc.perform(
                 MockMvcRequestBuilders.post("/api/employees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(employee))
-
         );
 
         //then - verify the result or output using assert statements
@@ -83,27 +80,36 @@ class EmployeeControllerTest {
 
     @Test
     @Order(2)
-    @DisplayName("JUnit test for create Employee method (Failed Case)")
-    void givenEmployeeObject_WhenCreateEmployee_thenThrowAnException() throws Exception {
+    @DisplayName("Integration Test to Create a Employee (Failed Case)")
+    void givenEmployeeObject_WhenCreateEmployee_thenReturn404() throws Exception {
         //given - precondition or setup
-        Employee employee = Employee.builder()
-                .id(1L)
+        Employee employee1 = Employee.builder()
                 .firstName("Lucas")
                 .lastName("Peixoto")
                 .email("lspeixotodev@gmail.com")
                 .age(31)
                 .build();
 
-        String alreadyExistsErrorMessage = "Employee Already exists with given email: " + employee.getEmail();
+        Employee employee2 = Employee.builder()
+                .firstName("Lucas")
+                .lastName("Peixoto Fernandes")
+                .email("lspeixotodev@gmail.com")
+                .age(32)
+                .build();
 
-        given(employeeService.saveEmployee(any(Employee.class)))
-                .willThrow(new ResourceAlreadyExistsException(alreadyExistsErrorMessage));
+        String alreadyExistsErrorMessage = "Employee Already exists with given email: " + employee2.getEmail();
 
         //when - action or the behaviour we`re testing
-        ResultActions response = mockMvc.perform(
-                MockMvcRequestBuilders.post("/api/employees", employee)
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/employees", employee1)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(employee))
+                        .content(objectMapper.writeValueAsString(employee1))
+        );
+
+        ResultActions response = mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/employees", employee2)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(employee2))
         );
 
         //then - verify the result or output using assert statements
@@ -116,7 +122,7 @@ class EmployeeControllerTest {
 
     @Test
     @Order(3)
-    @DisplayName("JUnit test for get All Employees method")
+    @DisplayName("Integration test for get All Employees method")
     void givenListOfEmployees_whenGetAllEmployees_thenReturnEmployeesList() throws Exception {
 
         //given - precondition or setup
@@ -131,14 +137,14 @@ class EmployeeControllerTest {
         Employee employee2 = Employee.builder()
                 .firstName("Liana")
                 .lastName("Fernandes")
-                .email("lianacgf@gmail.com")
-                .age(29)
+                .email("lianacgf@hotmail.com")
+                .age(30)
                 .build();
 
         listOfEmployees.add(employee1);
         listOfEmployees.add(employee2);
 
-        given(employeeService.getAllEmployees()).willReturn(listOfEmployees);
+        employeeRepository.saveAll(listOfEmployees);
 
         //when - action or the behaviour we`re testing
         ResultActions response = mockMvc.perform(MockMvcRequestBuilders.get("/api/employees"));
@@ -169,12 +175,10 @@ class EmployeeControllerTest {
 
     @Test
     @Order(4)
-    @DisplayName("JUnit test for get Employee by Id method (Success Case)")
+    @DisplayName("Integration test for get Employee by Id method (Success Case)")
     void givenEmployeeObject_whenGetEmployeeById_thenReturnEmployee() throws Exception {
 
         //given - precondition or setup
-        Long employeeId = 1L;
-
         Employee employee = Employee.builder()
                 .firstName("Lucas")
                 .lastName("Peixoto")
@@ -182,11 +186,10 @@ class EmployeeControllerTest {
                 .age(32)
                 .build();
 
-
-        given(employeeService.getEmployeeById(employeeId)).willReturn(Optional.of(employee));
+        Employee savedEmployee = employeeRepository.save(employee);
 
         //when - action or the behaviour we`re testing
-        ResultActions response = mockMvc.perform(MockMvcRequestBuilders.get("/api/employees/{id}", employeeId));
+        ResultActions response = mockMvc.perform(MockMvcRequestBuilders.get("/api/employees/{id}", savedEmployee.getId()));
 
         //then - verify the result or output using assert statements
         response
@@ -205,56 +208,49 @@ class EmployeeControllerTest {
 
     @Test
     @Order(5)
-    @DisplayName("JUnit test for get Employee by Id method (Failed Case)")
-    void givenEmployeeObject_whenGetEmployeeById_thenThrowAnException() throws Exception {
+    @DisplayName("Integration test for get Employee by Id method (Failed Case)")
+    void givenEmployeeObject_whenGetEmployeeById_thenReturn404() throws Exception {
         //given - precondition or setup
-        Long employeeId = 1L;
-
-        String doesNotExistsErrorMessage = "Employee Does not exists with given Id: " + employeeId;
-
-        given(employeeService.getEmployeeById(anyLong()))
-                .willThrow(new ResourceAlreadyExistsException(doesNotExistsErrorMessage));
+        long employeeId = 1L;
+        String doesNotExistsErrorMessage = "Employee Does not exists with given id: " + employeeId;
 
         //when - action or the behaviour we`re testing
         ResultActions response = mockMvc.perform(MockMvcRequestBuilders.get("/api/employees/{id}", employeeId));
 
         //then - verify the result or output using assert statements
         response
-                .andExpect(MockMvcResultMatchers.status().isConflict())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message", CoreMatchers.is(doesNotExistsErrorMessage)))
+                .andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message",
+                        CoreMatchers.is(doesNotExistsErrorMessage))
+                )
                 .andDo(MockMvcResultHandlers.print());
     }
 
     @Test
     @Order(6)
-    @DisplayName("JUnit test for update method (Success Case)")
+    @DisplayName("Integration test for Update Employee (Success Case)")
     void givenEmployeeObject_whenUpdate_thenReturnUpdatedEmployee() throws Exception {
         //given - precondition or setup
         Employee employee = Employee.builder()
-                .id(1L)
                 .firstName("Lucas")
                 .lastName("Peixoto")
                 .email("lspeixotodev@gmail.com")
                 .age(31)
                 .build();
 
+        Employee savedEmployee = employeeRepository.save(employee);
+
         Employee updatedEmployee = Employee.builder()
-                .id(1L)
+                .id(savedEmployee.getId())
                 .firstName("Lucas")
-                .lastName("Peixoto")
+                .lastName("Peixoto Fernandes")
                 .email("lspeixotodev@gmail.com")
                 .age(32)
                 .build();
 
-        given(employeeService.getEmployeeById(employee.getId())).willReturn(Optional.of(updatedEmployee));
-
-        given(employeeService.updateEmployee(any(Employee.class))).willAnswer(
-                (invocation -> invocation.getArgument(0))
-        );
-
         //when - action or the behaviour we`re testing
         ResultActions response = mockMvc.perform(
-                MockMvcRequestBuilders.put("/api/employees", employee)
+                MockMvcRequestBuilders.put("/api/employees", updatedEmployee)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updatedEmployee))
         );
@@ -265,40 +261,46 @@ class EmployeeControllerTest {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.age",
-                        CoreMatchers.is(updatedEmployee.getAge())));
+                        CoreMatchers.is(updatedEmployee.getAge())))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.lastName",
+                        CoreMatchers.is(updatedEmployee.getLastName())));
     }
 
     @Test
     @Order(7)
-    @DisplayName("JUnit test for update method (Failed Case)")
-    void givenEmployeeObject_whenUpdate_thenThrowAnException() throws Exception {
-
+    @DisplayName("Integration test for Update Employee (Failed Case)")
+    void givenEmployeeObject_whenUpdate_thenReturn404() throws Exception {
         //given - precondition or setup
         long employeeId = 1L;
-
         Employee employee = Employee.builder()
-                .id(1L)
                 .firstName("Lucas")
                 .lastName("Peixoto")
                 .email("lspeixotodev@gmail.com")
                 .age(31)
                 .build();
 
-        String doesNotExistsErrorMessage = "Employee Does not exists with given Id: " + employeeId;
+        employeeRepository.save(employee);
 
-        given(employeeService.updateEmployee(any(Employee.class)))
-                .willThrow(new ResourceAlreadyExistsException(doesNotExistsErrorMessage));
+        Employee updatedEmployee = Employee.builder()
+                .id(employeeId)
+                .firstName("Lucas")
+                .lastName("Peixoto Fernandes")
+                .email("lspeixotodev@gmail.com")
+                .age(32)
+                .build();
+
+        String doesNotExistsErrorMessage = "Employee Does not exists with given Id: " + employeeId;
 
         //when - action or the behaviour we`re testing
         ResultActions response = mockMvc.perform(
-                MockMvcRequestBuilders.put("/api/employees")
+                MockMvcRequestBuilders.put("/api/employees", employee)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(employee))
+                        .content(objectMapper.writeValueAsString(updatedEmployee))
         );
 
         //then - verify the result or output using assert statements
         response
-                .andExpect(MockMvcResultMatchers.status().isConflict())
+                .andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.message", CoreMatchers.is(doesNotExistsErrorMessage)))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON));
@@ -306,29 +308,24 @@ class EmployeeControllerTest {
 
     @Test
     @Order(8)
-    @DisplayName("JUnit test for delete method (Success Case)")
+    @DisplayName("Integration test for Delete Employee (Success Case)")
     void givenEmployeeObject_whenDeleteById_thenReturnUpdatedEmployee() throws Exception {
         //given - precondition or setup
-        long employeeId = 1L;
+
         Employee employee = Employee.builder()
-                .id(1L)
                 .firstName("Lucas")
                 .lastName("Peixoto")
                 .email("lspeixotodev@gmail.com")
                 .age(31)
                 .build();
 
-        given(employeeService.getEmployeeById(employeeId)).willReturn(Optional.of(employee));
-
-        given(employeeService.deleteEmployee(any(Employee.class))).willAnswer(
-                (invocation -> invocation.getArgument(0))
-        );
+        Employee savedEmployee = employeeRepository.save(employee);
 
         //when - action or the behaviour we`re testing
         ResultActions response = mockMvc.perform(
-                MockMvcRequestBuilders.delete("/api/employees", employee)
+                MockMvcRequestBuilders.delete("/api/employees", savedEmployee)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(employee))
+                        .content(objectMapper.writeValueAsString(savedEmployee))
         );
 
         //then - verify the result or output using assert statements
@@ -348,35 +345,39 @@ class EmployeeControllerTest {
 
     @Test
     @Order(9)
-    @DisplayName("JUnit test for delete method (Failed Case)")
-    void givenEmployeeObject_whenDelete_thenThrowAnException() throws Exception {
-
+    @DisplayName("Integration test for Delete Employee (Failed Case)")
+    void givenEmployeeObject_whenDeleteById_thenReturn404() throws Exception {
         //given - precondition or setup
         long employeeId = 1L;
-
         Employee employee = Employee.builder()
-                .id(1L)
                 .firstName("Lucas")
                 .lastName("Peixoto")
                 .email("lspeixotodev@gmail.com")
                 .age(31)
                 .build();
 
-        String doesNotExistsErrorMessage = "Employee Does not exists with given Id: " + employeeId;
+        Employee deletedEmployee = Employee.builder()
+                .id(employeeId)
+                .firstName("Lucas")
+                .lastName("Peixoto Fernandes")
+                .email("lspeixotodev@gmail.com")
+                .age(32)
+                .build();
 
-        given(employeeService.deleteEmployee(any(Employee.class)))
-                .willThrow(new ResourceAlreadyExistsException(doesNotExistsErrorMessage));
+        employeeRepository.save(employee);
+
+        String doesNotExistsErrorMessage = "Employee Does not exists with given Id: " + employeeId;
 
         //when - action or the behaviour we`re testing
         ResultActions response = mockMvc.perform(
-                MockMvcRequestBuilders.delete("/api/employees")
+                MockMvcRequestBuilders.delete("/api/employees", deletedEmployee)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(employee))
+                        .content(objectMapper.writeValueAsString(deletedEmployee))
         );
 
         //then - verify the result or output using assert statements
         response
-                .andExpect(MockMvcResultMatchers.status().isConflict())
+                .andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.message", CoreMatchers.is(doesNotExistsErrorMessage)))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON));

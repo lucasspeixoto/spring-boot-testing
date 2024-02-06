@@ -18,7 +18,7 @@ import java.util.Optional;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@DisplayName("Employee Repository Test")
+@DisplayName("Employee Repository (Unit Testing)")
 class EmployeeRepositoryTest {
 
     @Autowired
