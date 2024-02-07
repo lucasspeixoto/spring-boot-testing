@@ -1,20 +1,26 @@
-package com.lspeixotodev.springboottesting.repository;
+package com.lspeixotodev.springboottesting.integration;
 
 import com.lspeixotodev.springboottesting.model.Employee;
-import static org.assertj.core.api.Assertions.*;
+import com.lspeixotodev.springboottesting.repository.EmployeeRepository;
+import com.lspeixotodev.springboottesting.testcontainers.AbstractIntegrationTest;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+@ExtendWith(SpringExtension.class)
 @DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.AUTO_CONFIGURED)
-@DisplayName("Employee Repository (Unit Testing)")
-class EmployeeRepositoryTest {
+@DisplayName("Employee Repository (Integration Testing With Test Contaiers)")
+class EmployeeRepositoryITCTest extends AbstractIntegrationTest {
 
     @Autowired
     private EmployeeRepository employeeRepository;
@@ -29,9 +35,11 @@ class EmployeeRepositoryTest {
                 .email("lspeixotodev@gmail.com")
                 .age(32)
                 .build();
+
+        employeeRepository.deleteAll();
     }
 
-    //@Test
+    @Test
     @DisplayName("JUnit test for get saved Employee operation!")
     @Order(0)
     public void givenEmployeeObject_whenSave_thenReturnSavedEmployee() {
@@ -44,7 +52,7 @@ class EmployeeRepositoryTest {
 
     }
 
-    //@Test
+    @Test
     @DisplayName("JUnit test for get all employees operation!")
     @Order(1)
     public void givenEmployeeList_whenFindAll_thenReturnSavedEmployeeList() {
@@ -68,7 +76,7 @@ class EmployeeRepositoryTest {
         assertThat(employeesList.size()).isEqualTo(2);
     }
 
-    //@Test
+    @Test
     @DisplayName("JUnit test for get a employee by Id operation!")
     @Order(2)
     public void givenEmployeeObject_whenFindById_thenReturnEmployeeObject() {
@@ -87,7 +95,7 @@ class EmployeeRepositoryTest {
 
     }
 
-    //@Test
+    @Test
     @DisplayName("JUnit test for get a employee by Email operation!")
     @Order(3)
     public void givenEmployeeObject_whenFindByEmail_thenReturnEmployeeObject() {
@@ -105,7 +113,7 @@ class EmployeeRepositoryTest {
         assertThat(findEmployee.getLastName()).isEqualTo("Peixoto");
     }
 
-    //@Test
+    @Test
     @DisplayName("JUnit test for update a employee operation!")
     @Order(4)
     public void givenEmployeeObject_whenUpdateEmployee_thenReturnUpdatedEmployee() {
@@ -125,7 +133,7 @@ class EmployeeRepositoryTest {
         assertThat(savedEmployee.getLastName()).isEqualTo("Fernandes");
     }
 
-    //@Test
+    @Test
     @DisplayName("JUnit test for delete a employee operation!")
     @Order(5)
     public void givenEmployeeObject_whenDelete_thenReturnDeletedEmployeeObject() {
@@ -146,7 +154,7 @@ class EmployeeRepositoryTest {
 
     }
 
-    //@Test
+    @Test
     @DisplayName("JUnit test for find a employee by Find By FirstName and LastName operation!")
     @Order(6)
     public void givenEmployeeObject_whenFindByFirstAndLastName_thenReturnEmployeeObject() {
@@ -168,7 +176,7 @@ class EmployeeRepositoryTest {
         }
     }
 
-    //@Test
+    @Test
     @DisplayName("JUnit test for find a employee by Find By FirstName and LastName Named operation!")
     @Order(7)
     public void givenEmployeeObject_whenFindByFirstAndLastNameNamed_thenReturnEmployeeObject() {
@@ -188,7 +196,7 @@ class EmployeeRepositoryTest {
         }
     }
 
-    //@Test
+    @Test
     @DisplayName("JUnit test for find a employee by Find By age operation!")
     @Order(8)
     public void givenEmployeeObject_whenFindByAge_thenReturnEmployeeObject() {

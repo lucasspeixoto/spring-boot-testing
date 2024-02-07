@@ -1,20 +1,25 @@
-package com.lspeixotodev.springboottesting.repository;
+package com.lspeixotodev.springboottesting.integration;
 
 import com.lspeixotodev.springboottesting.model.Employee;
-import static org.assertj.core.api.Assertions.*;
+import com.lspeixotodev.springboottesting.repository.EmployeeRepository;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
 import java.util.Optional;
 
-@DataJpaTest
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.AUTO_CONFIGURED)
-@DisplayName("Employee Repository (Unit Testing)")
-class EmployeeRepositoryTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+//@ExtendWith(SpringExtension.class)
+//@DataJpaTest
+//@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+//@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+//@DisplayName("Employee Repository (Integration Testing)")
+class EmployeeRepositoryIntegrationTest {
 
     @Autowired
     private EmployeeRepository employeeRepository;
@@ -29,6 +34,8 @@ class EmployeeRepositoryTest {
                 .email("lspeixotodev@gmail.com")
                 .age(32)
                 .build();
+
+        employeeRepository.deleteAll();
     }
 
     //@Test

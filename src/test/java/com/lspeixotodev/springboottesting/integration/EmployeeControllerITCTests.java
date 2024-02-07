@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lspeixotodev.springboottesting.SpringBootTestingApplication;
 import com.lspeixotodev.springboottesting.model.Employee;
 import com.lspeixotodev.springboottesting.repository.EmployeeRepository;
+import com.lspeixotodev.springboottesting.testcontainers.AbstractIntegrationTest;
 import com.lspeixotodev.springboottesting.utils.constants.MediaType;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.*;
@@ -23,8 +24,8 @@ import java.util.List;
 @SpringBootTest(classes = SpringBootTestingApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@DisplayName("Employee Controller (Integration Testing)")
-public class EmployeeControllerIntegrationTests {
+@DisplayName("Employee Controller (Integration Testing With TestContainers)")
+public class EmployeeControllerITCTests extends AbstractIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -46,7 +47,7 @@ public class EmployeeControllerIntegrationTests {
         employeeRepository.deleteAll();
     }
 
-    //@Test
+    @Test
     @Order(1)
     @DisplayName("Integration Test to Create a Employee (Success Case)")
     public void givenEmployeeObject_WhenCreateEmployee_ThenReturnSavedEmployee() throws Exception {
@@ -78,7 +79,7 @@ public class EmployeeControllerIntegrationTests {
                         CoreMatchers.is(employee.getAge())));
     }
 
-    //@Test
+    @Test
     @Order(2)
     @DisplayName("Integration Test to Create a Employee (Failed Case)")
     void givenEmployeeObject_WhenCreateEmployee_thenReturn404() throws Exception {
@@ -120,7 +121,7 @@ public class EmployeeControllerIntegrationTests {
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON));
     }
 
-    //@Test
+    @Test
     @Order(3)
     @DisplayName("Integration test for get All Employees method")
     void givenListOfEmployees_whenGetAllEmployees_thenReturnEmployeesList() throws Exception {
@@ -173,7 +174,7 @@ public class EmployeeControllerIntegrationTests {
                         CoreMatchers.is(employee2.getAge())));
     }
 
-    //@Test
+    @Test
     @Order(4)
     @DisplayName("Integration test for get Employee by Id method (Success Case)")
     void givenEmployeeObject_whenGetEmployeeById_thenReturnEmployee() throws Exception {
@@ -206,7 +207,7 @@ public class EmployeeControllerIntegrationTests {
                         CoreMatchers.is(employee.getAge())));
     }
 
-    //@Test
+    @Test
     @Order(5)
     @DisplayName("Integration test for get Employee by Id method (Failed Case)")
     void givenEmployeeObject_whenGetEmployeeById_thenReturn404() throws Exception {
@@ -226,7 +227,7 @@ public class EmployeeControllerIntegrationTests {
                 .andDo(MockMvcResultHandlers.print());
     }
 
-    //@Test
+    @Test
     @Order(6)
     @DisplayName("Integration test for Update Employee (Success Case)")
     void givenEmployeeObject_whenUpdate_thenReturnUpdatedEmployee() throws Exception {
@@ -266,7 +267,7 @@ public class EmployeeControllerIntegrationTests {
                         CoreMatchers.is(updatedEmployee.getLastName())));
     }
 
-    //@Test
+    @Test
     @Order(7)
     @DisplayName("Integration test for Update Employee (Failed Case)")
     void givenEmployeeObject_whenUpdate_thenReturn404() throws Exception {
@@ -306,7 +307,7 @@ public class EmployeeControllerIntegrationTests {
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON));
     }
 
-    //@Test
+    @Test
     @Order(8)
     @DisplayName("Integration test for Delete Employee (Success Case)")
     void givenEmployeeObject_whenDeleteById_thenReturnUpdatedEmployee() throws Exception {
@@ -343,7 +344,7 @@ public class EmployeeControllerIntegrationTests {
                         CoreMatchers.is(employee.getAge())));
     }
 
-    //@Test
+    @Test
     @Order(9)
     @DisplayName("Integration test for Delete Employee (Failed Case)")
     void givenEmployeeObject_whenDeleteById_thenReturn404() throws Exception {
